@@ -1,5 +1,4 @@
 import mongoose, { mongo } from "mongoose";
-import { timeStamps } from "express"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import crypto from "crypto"
@@ -16,14 +15,14 @@ const userSchema = new mongoose.Schema(
             index: true,
         },
         email: {
-            type: true,
+            type: String,
             required: true,
             unique: true,
             lowercase: true,
             trim: true
         },
         fullname: {
-            type: true,
+            type: String,
             trim: true
         },
         password: {
@@ -44,7 +43,7 @@ const userSchema = new mongoose.Schema(
             type: Date,
         },
         emailVerificationToken: {
-            type: Date
+            type: String
         },
         emailVerificationExpiry: {
             type: Date
@@ -66,9 +65,8 @@ const userSchema = new mongoose.Schema(
 )
 
 userSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next()
+    if (!this.isModified("password")) return
     this.password = await bcrypt.hash(this.password, 10)
-    next() 
 })
 
 /*
