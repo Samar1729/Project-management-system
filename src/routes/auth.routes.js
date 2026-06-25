@@ -8,6 +8,9 @@ const router = Router()
 
 router.route("/register").post(userRegisterValidator(), validate ,registerUser)
 router.route("/login").post(userLoginValidator() , validate , loginUser)
+
+
+//secure routes
 router.route("/logout").post(verifyJWT , logoutUser)
 
 
