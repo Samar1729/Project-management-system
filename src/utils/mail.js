@@ -5,7 +5,7 @@ const sendEmail = async (options) => {
     const mailGenerator = new Mailgen({
         theme: "default",
         product: {
-            name: "taskManager",
+            name: "Samar",
             link: "https://taskmanagelink.com"
         }
     })
@@ -14,11 +14,11 @@ const sendEmail = async (options) => {
     const emailHTML = mailGenerator.generate(options.mailgenContent)
 
     const transporter = nodemailer.createTransport({
-        host: process.env.MAILTRAP_SMTP_HOST,
-        port: process.env.MAILTRAP_SMTP_PORT,
+        host: process.env.ETHEREAL_SMTP_HOST,
+        port: process.env.ETHEREAL_SMTP_PORT,
         auth: {
-            user: process.env.MAILTRAP_SMTP_USER,
-            pass: process.env.MAILTRAP_SMTP_PASS
+            user: process.env.ETHEREAL_SMTP_USER,
+            pass: process.env.ETHEREAL_SMTP_PASS
         }
     })
 
@@ -35,11 +35,7 @@ const sendEmail = async (options) => {
     } catch (error) {
         console.error("Email service failed silently, make sure that you have provided your MAILTRAP credentials in the .env file")
         console.error("Error:", error);
-
-
     }
-
-
 }
 
 const emailVerificationMailgenContent = (username, verificationUrl) => {

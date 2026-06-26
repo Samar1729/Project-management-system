@@ -233,7 +233,7 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
 })
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+    const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken
 
     if (!incomingRefreshToken) {
         throw new ApiError(
@@ -245,6 +245,20 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         const decodedRefreshToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
 
         const user = await User.findById(decodedRefreshToken._id)
+
+        /*
+The Client sends the Briefcase: Insomnia sends the incomingRefreshToken to your server.
+
+Unlocking the Briefcase: jwt.verify takes that token and uses your REFRESH_TOKEN_SECRET master key
+to unlock it.
+
+Reading the ID: Once unlocked, jwt.verify looks inside and says, "Ah, I see the _id stored in here!"
+It hands that _id over to your decodedRefreshToken variable.
+
+THEN we talk to the database: It's only on the very next
+line—User.findById(decodedRefreshToken._id)—that your code actually reaches out
+to MongoDB to say, "Hey database, give me the full user profile for this ID".
+        */
         if (!user) {
             throw new ApiError(
                 401, "Invalid refresh token"
@@ -307,9 +321,11 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(
-            200,
-            {},
-            "Password reset mail has been sent on your email id"
+            new ApiResponse(
+                200,
+                {},
+                "Password reset mail has been sent to your email successfully please check and verify your email"
+            )
         )
 })
 
@@ -348,19 +364,19 @@ const resetForgotPassword = asyncHandler(async (req, res) => {
         )
 })
 
-const changeCurrentPassword = asyncHandler(async(req , res) => {
-    const {oldPassword , newPassword} = req.body
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword } = req.body
 
     const user = await User.findById(req.user?._id)
 
     const isPasswordValid = await user.isPasswordCorrect(oldPassword)
 
     if (!isPasswordValid) {
-        throw new ApiError(400 , "Invalid Old Password")
+        throw new ApiError(400, "Invalid Old Password")
     }
 
     user.password = newPassword
-    await user.save({validateBeforeSave : false})
+    await user.save({ validateBeforeSave: false })
 
     return res
         .status(200)
