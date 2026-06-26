@@ -72,10 +72,19 @@ const userResetForgotPasswordValidator = () => {
     ]
 }
 
+const userResendEmailVerification = () => {
+    return [
+        body("email")
+            .notEmpty()
+            .withMessage("Email can't be empty to resend u the email")
+    ]
+}
+
 export {
     userRegisterValidator,
     userLoginValidator,
     userChangeCurrentPasswordValidator,
     userResetForgotPasswordValidator,
-    userforgotPasswordValidator
+    userforgotPasswordValidator,
+    userResendEmailVerification
 }

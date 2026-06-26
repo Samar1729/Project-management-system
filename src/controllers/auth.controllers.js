@@ -5,6 +5,7 @@ import { ApiError } from "../utils/api-error.js"
 import { emailVerificationMailgenContent, forgotPasswordMailGenContent, sendEmail } from "../utils/mail.js"
 import jwt from "jsonwebtoken"
 import { validationResult } from "express-validator"
+import crypto from "crypto"
 
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -173,7 +174,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
     }
 
     let hashedToken = crypto
-        .createHashed("sha256")
+        .createHash("sha256")
         .update(verificationToken)
         .digest("hex")
 
@@ -193,14 +194,69 @@ const verifyEmail = asyncHandler(async (req, res) => {
 
     await user.save({ validateBeforeSave: false })
 
-    res.status(200, json(
-        new ApiResponse(
-            200, { isEmailVerified: true }, "Email is Verified"
-        )
-    ))
+    return res
+        .status(200)
+        .json(new ApiResponse(
+            200,
+            {},
+            "Congratulations!!,your email has been verified!!"
+        ))
+
 })
 
+/*
 const resendEmailVerification = asyncHandler(async (req, res) => {
+    await User.findById(req.user._id)
+
+    if (!user) {
+        throw new ApiError(404, "User doesn't exist")
+    }
+
+    if (user.isEmailVerified) {
+        throw new ApiError(409, "Email is already verified")
+    }
+    */
+
+const resendEmailVerification = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        throw new ApiError(400, "Email is required");
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        throw new ApiError(404, "User with this email does not exist");
+    }
+
+    if (user.isEmailVerified) {
+        throw new ApiError(409, "Email is already verified");
+    }
+
+
+    const { unHashedToken, hashedToken, tokenExpiry } = user.generateTemporaryToken()
+
+    user.emailVerificationToken = hashedToken
+    user.emailVerificationExpiry = tokenExpiry
+
+    await user.save({ validateBeforeSave: false })
+    await sendEmail(
+        {
+            email: user?.email,
+            subject: "Please verify your email",
+            mailgenContent: emailVerificationMailgenContent(
+                user.username,
+                `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`
+            )
+        }
+    )
+
+    return status(200, json(new ApiResponse(200, {}, "Email has been sent to your email id again")))
+
+})
+
+const resendEmailVerificationAfterLogin = asyncHandler(async (req, res) => {
     await User.findById(req.user._id)
 
     if (!user) {
@@ -334,7 +390,7 @@ const resetForgotPassword = asyncHandler(async (req, res) => {
     const { newPassword } = req.body
 
     let hashedToken = crypto
-        .createHashed("sha256")
+        .createHash("sha256")
         .update(resetToken)
         .digest("hex")
 
@@ -399,5 +455,6 @@ export {
     refreshAccessToken,
     forgotPasswordRequest,
     changeCurrentPassword,
-    resetForgotPassword
+    resetForgotPassword,
+    resendEmailVerificationAfterLogin
 }
