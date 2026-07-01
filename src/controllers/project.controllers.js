@@ -116,7 +116,7 @@ const getProjects = asyncHandler(async (req, res) => {
 })
 
 const getProjectsById = asyncHandler(async (req, res) => {
-    //test
+    const {projectId} = req.params
 })
 
 const createProject = asyncHandler(async (req, res) => {
